@@ -1,0 +1,242 @@
+---
+title: 'IMT 573: Problem Set 2 - Working with Data'
+author: "Wenyue Yin"
+date: 'Due: Tuesday, October 15, 2019'
+output:
+  html_document:
+    df_print: paged
+---
+
+##### Collaborators: <!-- BE SURE TO LIST ALL COLLABORATORS HERE! -->
+
+##### Instructions:
+
+Before beginning this assignment, please ensure you have access to R and RStudio; this can be on your own personal computer or on the IMT 573 R Studio Server. 
+
+1. Download the `problemset2.Rmd` file from Canvas or save a copy to your local directory on RStudio Server. Open `problemset2.Rmd` in RStudio and supply your solutions to the assignment by editing `problemset2.Rmd`. 
+
+2. Replace the "Insert Your Name Here" text in the `author:` field with your own full name. Any collaborators must be listed on the top of your assignment. 
+
+3. Be sure to include well-documented (e.g. commented) code chucks, figures, and clearly written text chunk explanations as necessary. Any figures should be clearly labeled and appropriately referenced within the text. Be sure that each visualization adds value to your written explanation; avoid redundancy -- you do not need four different visualizations of the same pattern.
+
+4.  Collaboration on problem sets is fun and useful, and we encourage it, but each student must turn in an individual write-up in their own words as well as code/work that is their own.  Regardless of whether you work with others, what you turn in must be your own work; this includes code and interpretation of results. The names of all collaborators must be listed on each assignment. Do not copy-and-paste from other students' responses or code.
+
+5. All materials and resources that you use (with the exception of lecture slides) must be appropriately referenced within your assignment.  
+
+6. Remember partial credit will be awarded for each question for which a serious attempt at finding an answer has been shown. Students are \emph{strongly} encouraged to attempt each question and to document their reasoning process even if they cannot find the correct answer. If you would like to include R code to show this process, but it does not run withouth errors you can do so with the `eval=FALSE` option.
+
+```{r example chunk with a bug, eval=FALSE, include=FALSE}
+a + b # these object dont' exist 
+# if you run this on its own it with give an error
+```
+
+7. When you have completed the assignment and have **checked** that your code both runs in the Console and knits correctly when you click `Knit PDF`, rename the knitted PDF file to `ps2_YourLastName_YourFirstName.pdf`, and submit the PDF file on Canvas.
+
+##### Setup
+
+In this problem set you will need, at minimum, the following R packages.
+
+```{r}
+library(tidyverse)
+library(nycflights13)
+```
+
+#### Problem 1: Describing the NYC Flights Data
+
+In this problem set we will continue to use the data on all flights that departed NYC (i.e. JFK, LGA or EWR) in 2013. Recall, you can find this data in the `nycflights13` R package. Load the data in R and ensure you know the variables in the data.  Keep the documentation of the dataset (e.g. the help file) nearby.
+
+In Problem Set 1 you started to explore this data. Now we will perform a more thorough description and summarization of the data, making use of our new data manipulation skills to answer a specific set of questions. When answering these questions be sure to include the code you used in computing empirical responses, this code should include code comments. Your response should also be accompanied by a written explanation, code alone is not a sufficient response.
+
+##### (a) Describe and Summarize
+
+Answer the following questions in order to describe and summarize the `flights` data. 
+
+\begin{enumerate}
+\item How many flights out of NYC are there in the data?
+```{r}
+# Load nycflights13
+library(nycflights13)
+data(flights)
+flights <- tbl_df(flights)
+#As the flights are departure from NYC, we need to count the flights that are not flying to the airports in NYC.
+flight_num = filter(flights, dest!='JFK',dest!='LGA',dest!='EWR')
+summarise(flight_num, count=n())
+
+```
+
+\item How many NYC airports are included in this data?  Which airports are these?
+```{r}
+# 3
+# JFK, LGA and EWR
+```
+
+\item Into how many airports did the airlines fly from NYC in 2013?
+```{r}
+airports = filter(flights, year == 2013) %>%
+  group_by(dest)
+n_distinct(airports$dest,na.rm=FALSE)
+#Answer: Airlines flew to 105 airports in 2013.
+```
+
+\item How many flights were there from NYC to Seattle (airport code \texttt{SEA})?
+```{r}
+fltnum_SEA = filter(flights, flights$dest == 'SEA')
+summarise(fltnum_SEA,count=n())
+# Answer: There were 3923 flights from NYC to SEA.
+```
+
+\item Were there any flights from NYC to Spokane \texttt{(GEG)}?
+```{r}
+fltnum_GEG = filter(flights, flights$dest == 'GEG')
+summarise(fltnum_GEG,count=n())
+# Answer: No. There was no flight from NYC to Spokane.
+```
+
+\item Are there missing destination codes? (i.e. are there any destinations that do not look like valid airport codes (i.e. three-letter-all-upper case)?)
+```{r Setup, message=FALSE}
+flights_dest = group_by(flights, dest)
+flights_dest = summarise(flights_dest,count=n()) 
+#for dest in flights_dest$dest:
+# {
+# }
+# I didn't find a solution for that. As by eyes I didn't find a missing code, so I'm not sure if that's right to search for the codes that are not with three-letter-upper. I think I should use a for loop here, but not sure how to do that.
+```
+
+\end{enumerate}
+
+##### (b) Reflect and Question
+
+What are your thoughts on the questions (and answers) so far?  Were you able to answer all of these questions?  Are all questions well defined?  Is the data suitable for answering all these?
+
+It took me quite a few time to answer the last question, but overall the questions are well-defined. Only I'm not sure about the defination of flights out of NYC.
+
+#### Problem 2: NYC Flight Delays
+
+Flights are often delayed.  Let's look at closer at this topic using the NYC Flight dataset. Answer the following questions about flight delays using the `dplyr` data manipulation verbs we talked about in class.
+
+##### (a) Typical Delays
+
+What is the typical delay for a flight in this data?
+
+```{r}
+del = group_by(flights, flights$dep_delay)
+del = summarise(del,count=n(),na.rm = TRUE) 
+arrange(del,desc(count))
+#answer: The typical delay is -5
+```
+
+
+##### (b) Defining Flight Delays
+
+What definition of flight delay did you use to answer part (a)? Did you do any specific exploration and description of this variable prior to using it? If no, please do so now. Is there any missing data?  Are there any implausible or invalid entries?  
+
+No. I should exclude the null values.
+
+##### (c) Delays by Destination
+
+Now, compute flight delay by destination. Which are the worst three destinations from NYC if you don't like flight delays? Be sure to justify your delay variable choice. 
+
+```{r}
+# Load standard libraries
+
+by_des <- group_by(flights, dest)
+by_des <- summarise(by_des, delay = mean(dep_delay, na.rm = TRUE))
+arrange(by_des, desc(delay)) 
+#Answer: The worst three are CAE,TUI,and OKC.
+```
+
+
+##### (d) Seasonal Delays
+
+Flight delays may be partly related to weather, as you may have experienced yourself. We do not have weather information here but let's analyze how delays are related to season. Which seasons have the worst flights delays? Why might this be the case? In your communication of your analysis, use one graphical visualization and one tabular respresentation of your findings.
+
+```{r}
+by_sea <- group_by(flights, month)
+by_sea <- summarise(by_sea, delay = mean(dep_delay, na.rm = TRUE))
+arrange (by_sea,desc(delay))
+
+
+#Summer has the worst delay.
+```
+
+```{r}
+ggplot(data=by_sea, aes(x=month,y=delay)) + 
+  geom_bar(aes(alpha=month),colour="black",fill="orange", width=.5, stat="identity") + 
+  guides(fill=FALSE) +
+  xlab("Month") + ylab("Mean delay Time") +
+  ggtitle("Delay by Season")
+
+#Delay
+```
+\textcolor{blue}{Hint: you may want to create a date variable.}
+
+##### (e) Challenge Your Results
+
+After completing the exploratory analyses from Problem 2, do you have any concerns about your findings? How well defined was your original question? Do you still believe this question can be answered using this dataset? Comment on any ethical and/or privacy concerns you have with your analysis. 
+
+For now I feel most of the questions can be answered by the dataset.
+
+#### Problem 3: Let's Fly Across the Country!
+
+#### (a) Describe and Summarize
+
+Answer the following qeustions to describe and summarize the `flights` data, focusing on flights from New York to Portland, OR (airport code `PDX`).
+
+\begin{enumerate}
+\item How many flights were there from NYC airports to Portland in 2013?
+```{r}
+fltnum_PDX_2013 = filter(flights, year == 2013, flights$dest == 'PDX')
+summarise(fltnum_PDX_2013,count=n())
+# Answer: 1354 flights from NYC to PDX
+```
+
+\item How many airlines fly from NYC to Portland?
+```{r}
+fltnum_PDX = filter(flights, flights$dest == 'PDX')
+summarise(fltnum_PDX,count=n_distinct(carrier))
+#Answer: 3 airlines fly from NYC to PDX
+```
+
+\item Which are these airlines (find the 2-letter abbreviations)?  How many times did each of these go to Portland?
+```{r}
+fltnum_PDX_time = group_by(fltnum_PDX, carrier)
+summarise(fltnum_PDX_time, airtime = mean(air_time, na.rm = TRUE))
+```
+
+\item How many unique airplanes fly from NYC to PDX? \\
+```{r}
+summarise(fltnum_PDX,count=n_distinct(tailnum))
+# There are 492 unique airplanes
+```
+
+
+\textcolor{blue}{Hint: airplane tail number is a unique identifier of an airplane.}
+\item How many different airplanes flew from each of the three NYC airports to Portland?
+```{r}
+fltnum_PDX_ori = group_by(fltnum_PDX, origin)
+summarise(fltnum_PDX_ori, count=n_distinct(tailnum),na.rm = TRUE)
+# Answer: there are 297 from EWR, 195 from JFK, and 0 from LGA.
+```
+
+\item What percentage of flights to Portland were delayed at departure by more than 15 minutes?
+```{r}
+fltnum_PDX_depdel <- filter(fltnum_PDX, dep_delay>15)
+delay_num <- summarise(fltnum_PDX_depdel,count=n())
+total_num <- summarise(fltnum_PDX_2013,count=n())
+percentage <- delay_num[[1]] / total_num[[1]]
+print(percentage)
+```
+
+\item Is one of the New York airports noticeably worse in terms of departure delays for flights to Portland than others?
+```{r}
+summarise(fltnum_PDX_ori, delaytime = mean(dep_delay, na.rm = TRUE))
+# No, They are about the same
+```
+
+\end{enumerate}
+
+#### (b) Reflect and Question
+
+What are your thoughts on the questions (and answers) examining flights to Portland?  Were you able to answer all of these questions?  Are all questions well defined?  Is the data suitable for answering all these?
+
+#Yes I think they are well defined and are able to be answered.

@@ -1,0 +1,87 @@
+---
+title: "IMT 573 Lab: Central Limit Theorem"
+author: "Wenyue Yin"
+date: "October 30th, 2019"
+output: 
+  tufte_handout:
+    highlight: tango
+---
+
+\marginnote{\textcolor{blue}{Don't forget to list the full names of your collaborators!}}
+
+# Collaborators: 
+
+# \textbf{Instructions:}
+
+Before beginning this assignment, please ensure you have access to R and/or RStudio. 
+
+1. Download the `week5a_lab.Rmd` file from Canvas. Open `week5a_lab.Rmd` in RStudio (or your favorite editor) and supply your solutions to the assignment by editing `week5a_lab.Rmd`. 
+
+2. Replace the "Insert Your Name Here" text in the `author:` field with your own full name.
+
+3. Be sure to include code chucks, figures and written explanations as necessary. Any collaborators must be listed on the top of your assignment. Any figures should be clearly labeled and appropriately referenced within the text. 
+
+5. When you have completed the assignment and have **checked** that your code both runs in the Console and knits correctly when you click `Knit`, rename the R Markdown file to `YourLastName_YourFirstName_lab5a.Rmd`, and knit it into a PDF. Submit the compiled PDF on Canvas.
+
+In this lab, you will need access to the following R packages:
+
+```{r Setup, message=FALSE}
+# Load some helpful libraries
+library(tidyverse)
+library(gridExtra)
+```
+
+# Problem 1: Simulating Data in R
+
+**R** can easily generate random samples from many different probability distributions. Here, you will use this functionality to explore the Central Limit Theorem by performing a simulation experiment.
+
+\marginnote{\textcolor{red}{Hint: You might find out more about the distribution functions in R using the help files, \texttt{?distributions}.}}
+
+
+#### Step 1: Pick your favorite probability distribution.
+
+* What distribution did you choose?
+* What are the parameters that characterize the distribution you chose?
+* Describe a situation in which you would expect to see this distribution in real-world data.
+
+# Binomial distribution
+# mean, middle,mode
+# Drop dice
+
+\marginnote{\textcolor{red}{Hint: Look at OpenIntro Statistics Chapter 3.}}
+
+#### Step 2: Choose a value for each parameter in the distribution (e.g. the mean and variance for the Normal distribution). Use the random generation function for this distribution to construct 100 random samples of sample sizes `n = 10, 20, 50, 100, 500`.
+
+\marginnote{\textcolor{red}{Hint: Each distribution function in R has an associated function to generate random deviates, e.g. \texttt{rbinom} for the Binomial distribution.}}
+
+```{r, message=FALSE}
+#dice100 = sample(6,100, replace = TRUE)
+#
+values <- runif(999999)
+breaks <- seq(0.2,0.8,0.05)
+
+means<-vector()
+for (i in 1:5000){
+  means[i] <- mean(sample(values,30))
+}
+hist(breaks)
+```
+
+#### Step 3: Compute the sample mean for each of the 100 random samples. Construct a visualization showing the distribution of the sample mean for each case (i.e. probability distribution and sample size pair). You might find the following code helpful for showing multiple plots at once.
+
+```{r}
+# par(mfrow=c(2,5))
+
+barplot(dice100, xlab = "number", ylab = "count", main = "count for 100 dice rolls")
+
+```
+
+* What is the true population mean for the distribution? 
+
+\marginnote{\textcolor{red}{Hint: Most distributions are characterized by parameters related to the mean and variance.}}
+
+* What patterns do you see in the distribution of the sample mean as the sample size n increases?
+* How does this simulation experiment demonstrate the Central Limit Theorem?
+
+
+

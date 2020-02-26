@@ -1,0 +1,239 @@
+---
+title: 'IMT 573: Problem Set 6 - Inference and Monte Carlo'
+author: "Wenyue Yin"
+date: 'Due: Tuesday, November 12, 2019'
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+<!-- This syntax can be used to add comments that are ignored during knitting process. -->
+
+##### Collaborators: LiHua Deng
+
+##### Instructions:
+
+Before beginning this assignment, please ensure you have access to R and RStudio; this can be on your own personal computer or on the IMT 573 R Studio Server. 
+
+1. Download the `problemset4.rmd` file from Canvas or save a copy to your local directory on RStudio Server. Open `problemset4.rmd` in RStudio and supply your solutions to the assignment by editing `problemset4.rmd`. 
+
+2. Replace the "Insert Your Name Here" text in the `author:` field with your own full name. Any collaborators must be listed on the top of your assignment. 
+
+3. Be sure to include well-documented (e.g. commented) code chucks, figures, and clearly written text chunk explanations as necessary. Any figures should be clearly labeled and appropriately referenced within the text. Be sure that each visualization adds value to your written explanation; avoid redundancy -- you do no need four different visualizations of the same pattern.
+
+4.  Collaboration on problem sets is fun and useful, and we encourage it, but each student must turn in an individual write-up in their own words as well as code/work that is their own.  Regardless of whether you work with others, what you turn in must be your own work; this includes code and interpretation of results. The names of all collaborators must be listed on each assignment. Do not copy-and-paste from other students' responses or code.
+
+5. All materials and resources that you use (with the exception of lecture slides) must be appropriately referenced within your assignment.  
+
+6. Remember partial credit will be awarded for each question for which a serious attempt at finding an answer has been shown. Students are \emph{strongly} encouraged to attempt each question and to document their reasoning process even if they cannot find the correct answer. If you would like to include R code to show this process, but it does not run withouth errors you can do so with the `eval=FALSE` option.
+
+```{r example chunk with a bug, eval=FALSE, include=FALSE}
+a + b # these object dont' exist 
+# if you run this on its own it with give an error
+```
+
+7. When you have completed the assignment and have **checked** that your code both runs in the Console and knits correctly when you click `Knit PDF`, rename the knitted PDF file to `ps4_ourLastName_YourFirstName.pdf`, and submit the PDF file on Canvas.
+
+##### Setup
+
+Load any R packages of interest here.
+
+```{r Setup, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+```
+
+**NOTE: You do not need to perform all calculations in R. Writing them in LaTeX and/or plain text is completely fine. However, be sure your work is readable and understandable. If you do solve problems programmatically, clearly describe your approach and what you are doing.**
+
+#### Problem 1: Fathers and Sons
+
+We will examine the heights of fathers and sons (\textit{fatherson.csv} from the previous problem set). If we look at sample means, we see that sons are taller than their fathers. But could this difference be due to chance?
+
+
+##### (a) Load the data and examine it. \textit{fheight} are fathers' heights and \textit{sheight} are sons' heights. How many observations are there? Are there missing values?
+
+```{r}
+fatherson <- read.csv("fatherson.csv", sep = "\t")
+# There are 1078 observations and no missing values in it.
+```
+
+##### (b) What is an appropriate measurement type/scale for these variables? Are the values discrete or continuous?
+
+```{r}
+#Interval measurement
+#Continuous values
+```
+
+##### (c) Describe the fathers' and sons' heights. What do the descriptive statistics look like? Are there any unexpected values? In general, who tends to be taller: fathers or sons?
+
+```{r}
+mean_father <- mean(fatherson$fheight) #171.92
+mean_son <- mean(fatherson$sheight) #174.45
+# Sons tend to be taller.
+```
+
+##### (d) Create a density plot with both sets of heights overlayed on the same figure. How do these plots look? What do they suggest in terms of fathers' and sons' relative heights?
+
+```{r}
+ggplot(data=fatherson) +
+  geom_histogram((aes(x = fheight, y=..density..)),bins=15, fill = 'purple', alpha = 0.4)+
+  geom_histogram((aes(x = sheight , y=..density..)),bins=15, fill = 'yellow', alpha = 0.4)
+# Sons' heights are taller than fathers'.
+# The Mode of fheight and sheight are similar
+```
+
+##### (e) Let's do a t-test to determine if the differences we observe are statistically significant. Compute the t-statistic yourself (i.e. do NOT use any pre-existing functions that perform the test). We want to perform what is called a two-sample t-test (we are not going to assume the fathers and sons are paired in some way) and we want to test whether there is a difference in the means.
+
+```{r}
+# H0 - The means of heights for fathers and sons are the same.
+# H1: Sons are taller than fathers
+
+#t.test(fatherson$fheight, fatherson$sheight, paired = FALSE)
+fatherson_1 <- fatherson
+fatherson_1$ID <- seq.int(nrow(fatherson))
+fatherson_m <- melt(fatherson_1, id = "ID")
+
+test <- select(fatherson_m,variable,value)
+
+fheight <- test$value[test$variable == "fheight"]
+sheight <- test$value[test$variable == "sheight"]
+# Len of each set
+len_fh <- length(fheight)
+len_sh <- length(sheight)
+# Standard deviation
+#sd_f_t <- sd(fheight)
+#sd_s_t <- sd(sheight)
+sd_f <- sqrt(sum((fheight-mean(fheight))^2/(len_fh-1)))
+sd_s <- sqrt(sum((sheight-mean(sheight))^2/(len_sh-1)))
+# Calculate pooled standard deviation
+sd_pooled <- sqrt((sd_f^2 + sd_s^2)/2)
+# pooled variance
+var_pooled <- sd_pooled^2
+# Compute t-value
+t <- (mean_father - mean_son) / sqrt(var_pooled / len_fh + var_pooled / len_sh)
+t
+
+```
+
+##### (f) Did you use pooled or unpooled standard errors in your calculations? Why or why not? (Hint: see OpenIntro Stats 7.3.4)
+
+```{r}
+#I used pooled standard errors.
+#Standard errors are calaulated in order to ger the confidence interval.
+```
+
+##### (g) Using a t-table, what is the likelihood that the t-statistic you calculated occurs just by random chance? (Hint: be sure you have the appropriate degrees of freedom)
+
+```{r}
+df = len_fh + len_sh - 2
+t.test(fatherson$fheight, fatherson$sheight, paired = FALSE)
+#The likelihood that such t value does not happen just by chance due to the degree of freedom as 2154 and an extremely small p value. The value means that the significance is high and we can reject the null hypothesis and claim that sons are taller than fathers in this case.
+
+```
+
+##### (h) What do you find when performing the t-test? Are the differences statistically significant? Interpret your results.
+
+```{r}
+#Yes, we can tell the difference is significant by the extramely small p-value. And we can tell that sons are higher than fathers.
+```
+
+#### Problem 2: A Monte Carlo Approach
+
+Now, let's examine the same data but using a what's called a Monte Carlo approach. In essence, we're going to leverage repeated (re-)sampling of our data (something we'll discuss more in a few weeks when talking about bootstrapping).
+
+##### (a) What is the overall mean and standard deviation for all heights? (i.e. when examining fathers' and sons' heights together)
+
+```{r}
+mean_ah <- mean(fatherson_m$value)
+std_ah <- sd(fatherson_m$value)
+```
+
+##### (b) Create two samples of data pulled from random normals. For both of these distributions, let the size of the sample equal that of the fathers' (or sons') heights. Let the mean and standard deviation be those that you calculated in 2-a. Note that you want two samples pulled from the same distribution - one of these we'll call "fathers" and the other we'll call "sons." What scenario are we simulating here with respect to the differences in fathers and sons heights? (Hint: think about a null hypothesis)
+
+```{r}
+fathers <- rnorm(n=len_fh, mean=mean_ah, sd=std_ah)
+sons <- rnorm(n=len_fh,  mean=mean_ah, sd=std_ah)
+
+# Null Hypothesis: diff = 0
+```
+
+##### (c) What is the difference in means between the fathers' and sons' heights based using the simulated data? How does this compare to the difference in means for the dataset we read in?
+
+```{r}
+diff <- mean(fathers) - mean(sons)
+abs(mean_father - mean_son) - diff
+```
+
+##### (d) Now, repeat problem 2-b a large number of times (S; with S > 1000). At each iteration, store the difference in means of the fathers' and sons' heights so you ultimately end up with S different values for the difference in means.
+
+```{r}
+S <- 2000
+fheight_S <- matrix(rnorm(n=1078*S, mean=mean_ah, sd=std_ah),ncol = S)
+sheight_S <- matrix(rnorm(n=1078*S, mean=mean_ah, sd=std_ah),ncol = S)
+#mean in fh for each column
+df_fh <- as.data.frame(fheight_S)
+df_fh[1079,] <- colMeans(df_fh)
+#Mean in sh
+df_sh <- as.data.frame(sheight_S)
+df_sh[1079,] <- colMeans(df_sh)
+
+# The difference in means are stored in the third row.
+mean_diff <- rbind(df_fh[1079,], df_sh[1079,])
+mean_diff[3,] <- mean_diff[2,] - mean_diff[1,]
+rownames(mean_diff) <- c("mean_fheight", "mean_sheight", "mean_diff")
+```
+
+##### (d) What is the mean of the differences? Explain why you see the result that you do.
+
+```{r}
+mean(as.numeric(as.vector(mean_diff[3,])))
+# The larger the data set is, the closer the two sets's means are.
+```
+
+##### (e) What is the standard error of the differences? How do these compare to the values we saw with the non-simulated data when computing the t-statistic?
+
+```{r}
+std_diff <- sd(as.numeric(as.vector(mean_diff[3,]))) 
+# std_diff ~ 0.303
+abs(std_diff - sd_pooled)
+```
+
+##### (f) What is the largest difference we encounter (in terms of absolute value)? How does this compare to the difference in means that we saw with the non-simulated data?
+
+```{r}
+abs_mean <- abs(as.numeric(as.vector(mean_diff[3,])))
+max_mean <- max(abs_mean)
+max_mean - (mean_son - mean_father)
+```
+
+##### (g) What is the 5th and 95th percentile of differences?
+
+```{r}
+quantile(abs_mean,probs=c(.05,.95))
+```
+
+##### (h) Now, increase S to increasingly large numbers and note the maximum difference in means that you see for each S. Do you see a maximum difference that is comparable to the actual difference in means that we encountered with the non-simulated data? If so, how often? Is this expected?
+
+```{r}
+# No. I tried 3000,4000,6000,8000 as S value, but none of them is comparable to the actual difference in means. It is as expected as the means tend to be closer while increasing the S.
+S <- 6000
+fheight_S <- matrix(rnorm(n=1078*S, mean=mean_ah, sd=std_ah),ncol = S)
+sheight_S <- matrix(rnorm(n=1078*S, mean=mean_ah, sd=std_ah),ncol = S)
+#mean in fh for each column
+df_fh <- as.data.frame(fheight_S)
+df_fh[1079,] <- colMeans(df_fh)
+#Mean in sh
+df_sh <- as.data.frame(sheight_S)
+df_sh[1079,] <- colMeans(df_sh)
+
+# The difference in means are stored in the third row.
+mean_diff <- rbind(df_fh[1079,], df_sh[1079,])
+mean_diff[3,] <- mean_diff[2,] - mean_diff[1,]
+rownames(mean_diff) <- c("mean_fheight", "mean_sheight", "mean_diff")
+abs_mean <- abs(as.numeric(as.vector(mean_diff[3,])))
+max_mean <- max(abs_mean)
+max_mean - (mean_son - mean_father)
+
+```

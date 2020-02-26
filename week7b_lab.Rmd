@@ -1,0 +1,214 @@
+---
+title: "IMT 573 Lab: Regression"
+author: "Wenyue Yin"
+date: "November 7th, 2019"
+output: 
+  tufte_handout:
+    highlight: tango
+---
+
+\marginnote{\textcolor{blue}{Don't forget to list the full names of your collaborators!}}
+
+# Collaborators: 
+
+# \textbf{Instructions:}
+
+Before beginning this assignment, please ensure you have access to R and/or RStudio. 
+
+1. Download the `week7b_lab.Rmd` file from Canvas. Open `week7b_lab.Rmd` in RStudio (or your favorite editor) and supply your solutions to the assignment by editing `week7b_lab.Rmd`. 
+
+2. Replace the "Insert Your Name Here" text in the `author:` field with your own full name.
+
+3. Be sure to include code chucks, figures and written explanations as necessary. Any collaborators must be listed on the top of your assignment. Any figures should be clearly labeled and appropriately referenced within the text. 
+
+4. When you have completed the assignment and have **checked** that your code both runs in the Console and knits correctly when you click `Knit`, rename the R Markdown file to `YourLastName_YourFirstName_lab5b.Rmd`, and knit it into a PDF. Submit the compiled PDF on Canvas.
+
+In this lab, you will use whichever libraries are most useful to you.
+
+```{r Setup, message=FALSE}
+# Load some helpful libraries
+library(tidyverse)
+library(ggplot2)
+library(formatR)
+```
+
+Let's begin by reading in data from the following course:  http://data.princeton.edu/wws509/datasets/#salary. Note that this url will have information on variables in the dataset. Also note that the dataset we will be using was previously used as part of a textbook and is a rather well-known dataset for practicing regression.
+
+## Inspecting the data
+
+#### 1. Read in the data. Is it clean and ready for analysis? What do the variables look like?
+
+```{r}
+# load url
+url <- "https://data.princeton.edu/wws509/datasets/salary.dat"
+salary <- read.table(url, header = TRUE)
+```
+
+## Univariate regression
+
+#### 2. Plot the salary vs years in current academic position.
+
+```{r}
+# Load some helpful libraries
+plot(salary$yr,salary$sl, xlab = 'Years',ylab = 'Salary')
+
+#ggplot(salary,aes(x = yr, y = sl)) + geom_point(color = 'blue', size = 2)
+```
+
+#### 3. What is the salary increase associated with each additional year in current academic position? What do the confidence intervals look like?
+
+```{r}
+cor (salary$sl,salary$yr) # 0.700669
+fit <- lm(formula = salary$sl ~ salary$yr, salary)
+
+confint(fit, 'yr', level = 0.95)
+```
+
+#### 4. What do the residuals look like? Plot and describe them.
+
+```{r}
+residuals <- resid(fit)
+plotResiduals <- ggplot(data = data.frame(x=salary$sl, y = residuals), aes(x=x, y = y))+
+  geom_point(color = 'red', size = 5)
+plotResiduals
+```
+
+#### 5. Add the regression line to your plot of the data
+
+```{r}
+
+plotResiduals <- plotResiduals +
+  stat_smooth(method = 'lm', se = FALSE, color = 'red')+
+  xlim(14000,38000)+
+  ylim(-7500,7500)+
+  labs(title = 'First residual plot', y = 'residual', x = 'salary')
+plotResiduals
+#ggplot(salary,aes(x = yr, y = sl)) + geom_point(color = 'blue', size = 2)+
+#  geom_line(aes(x = 18166.1, y = 752.8), color = 'red')
+```
+
+## Multivariate regression
+
+#### 6. Run a multiple regression on salary while including the following variables: yr, yd, rk, dg. What is now the effect of each additional year in current academic position?
+
+```{r}
+multiregression <- lm (formula = salary$yr ~ salary$dg + salary$yd + salary$rk, salary )
+#multiregression
+
+library(dummies)
+rkDummies <- dummy(salary$rk)
+dgDummies <- dummy(salary$dg)
+salaryDummy <- subset(salary, select = c('sl','yr','yd'))
+salaryDummy <- cbind(salaryDummy, rkDummies)
+salaryDummy <- cbind(salaryDummy, dgDummies)
+fitDummy <- lm(sl~., salaryDummy)# . means everything else in the dataset
+fitDummy
+```
+
+#### 7. Did the coefficent change from the previous regression? Is it still statistically significant? Can you explain this?
+
+```{r}
+salaryDummy2 <- subset(salaryDummy, select= c('sl','yr', 'yd','rkassociate', 'rkfull','dgdoctorate'))
+
+```
+
+#### 8. What do the residuals look like? Plot and describe them.
+
+```{r}
+multi_residuals <- resid(multiregression)
+plotResiduals_multi <- ggplot(data = data.frame(x=salary$sl, y = multi_residuals), aes(x=x, y = y))+
+  geom_point(color = 'blue', size = 5)
+
+plotResiduals_multi <- plotResiduals_multi+
+  stat_smooth(method = 'lm', se = FALSE, color = 'red')+
+  xlim(14000,38000)+
+  ylim(-7500,7500)+
+  labs(title = 'Second residual plot', y = 'multi_residuals', x = 'salary')
+plotResiduals_multi
+```
+
+## Adding randomness
+
+#### 9. create 20 new variables, each with randomly sampled data from a distribution of your choice. Add these to the above regression.
+
+```{r}
+dataRand <- matrix(nrow = 52, ncol = 20)
+ColNames <- vector()
+for (i in 1:20){
+  dataRand[,i] <- runif(52)
+  ColNames[i] <- paste0('randomv', i)
+}
+dataRand <- data.frame(dataRand)
+colnames(dataRand)<-ColNames
+
+dataDummy3 <-cbind(salary, dataRand)
+fitDummy3<- lm(sl~ ., dataDummy3)
+summary(fitDummy3)
+```
+
+#### 10. Did the coefficent change from the previous regression? Is it still statistically significant?
+
+```{r}
+
+```
+#### 11. What do the residuals look like? Plot and describe them.
+```{r}
+
+```
+#### 12. Did the model fit improve (R-sq)? Is this expected? Why?
+```{r}
+
+```
+#### 13. How did the model fare compared to previous models with respect to AIC/BIC?
+```{r}
+AIC(fit)
+BIC(fit)
+
+AIC(fitDummy)
+BIC(fitDummy)
+
+```
+## Forward and backward selection
+
+#### Run forward selection on all the data using salary as your exogenous variable. What does your final model look like?
+```{r}
+#1. start with empty model
+#2. Get list of possible explantory valuables
+#- While new AIC < previous AIC
+  #3. for every possible valuable:
+    #3a. add it to my model
+    #3b. calculate the AIC
+  #4. select variable with lowest AIC and add to model
+
+
+sxDummy <- dummy(salary$sx)
+dataDummyAll <- cbind(salaryDummy, sxDummy)
+
+currentRegression <- character()
+possibleRegression<- names(dataDummyAll[,-1])
+bestAic <- Inf
+
+for (var in possibleRegression){
+  temp <- currentRegression
+  temp[length(temp) +1] <- var
+  temp<- c('sl', temp)
+  currentlm <- lm(sl~. , dataDummyAll[, temp])
+  currentAIC <- AIC(currentlm)
+  if (currentAIC < bestAic){
+    toAdd <- var
+    bestAic <- currentAIC
+  }
+}
+print(c(toAdd, bestAic))
+
+```
+#### Run backward selection on all the data using salary as your exogenous variable. What does your final model look like?
+```{r}
+if(currentAIC < bestAic){
+  currentRegression[length(currentRegression)+1] <- toAdd
+  possibleRegression <- possibleRegression[possibleRegression!= toAdd]
+  bestAic = currentAIC
+  cat(c("\t\tAdding", toAdd, "to mode1.New best AIC = ", bestAic,"\n\n"))
+}
+else{}
+```

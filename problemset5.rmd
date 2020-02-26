@@ -1,0 +1,213 @@
+---
+title: 'IMT 573: Problem Set 5 - Bayes Theorem & Distributions'
+author: "Wenyue Yin"
+date: 'Due: Tuesday, November 5, 2019'
+output: pdf_document
+---
+
+<!-- This syntax can be used to add comments that are ignored during knitting process. -->
+
+##### Collaborators: Yimeng Liu, Tianyi Zhou
+
+##### Instructions:
+
+Before beginning this assignment, please ensure you have access to R and RStudio; this can be on your own personal computer or on the IMT 573 R Studio Server. 
+
+1. Download the `problemset4.rmd` file from Canvas or save a copy to your local directory on RStudio Server. Open `problemset4.rmd` in RStudio and supply your solutions to the assignment by editing `problemset4.rmd`. 
+
+2. Replace the "Insert Your Name Here" text in the `author:` field with your own full name. Any collaborators must be listed on the top of your assignment. 
+
+3. Be sure to include well-documented (e.g. commented) code chucks, figures, and clearly written text chunk explanations as necessary. Any figures should be clearly labeled and appropriately referenced within the text. Be sure that each visualization adds value to your written explanation; avoid redundancy -- you do no need four different visualizations of the same pattern.
+
+4.  Collaboration on problem sets is fun and useful, and we encourage it, but each student must turn in an individual write-up in their own words as well as code/work that is their own.  Regardless of whether you work with others, what you turn in must be your own work; this includes code and interpretation of results. The names of all collaborators must be listed on each assignment. Do not copy-and-paste from other students' responses or code.
+
+5. All materials and resources that you use (with the exception of lecture slides) must be appropriately referenced within your assignment.  
+
+6. Remember partial credit will be awarded for each question for which a serious attempt at finding an answer has been shown. Students are \emph{strongly} encouraged to attempt each question and to document their reasoning process even if they cannot find the correct answer. If you would like to include R code to show this process, but it does not run withouth errors you can do so with the `eval=FALSE` option.
+
+```{r example chunk with a bug, eval=FALSE, include=FALSE}
+a + b # these object dont' exist 
+# if you run this on its own it with give an error
+```
+
+7. When you have completed the assignment and have **checked** that your code both runs in the Console and knits correctly when you click `Knit PDF`, rename the knitted PDF file to `ps4_ourLastName_YourFirstName.pdf`, and submit the PDF file on Canvas.
+
+##### Setup
+
+Load any R packages of interest here.
+
+```{r Setup, message=FALSE}
+
+```
+
+**NOTE: You do not need to perform all calculations in R. Writing them in LaTeX and/or plain text is completely fine. However, be sure your work is readable and understandable. If you do solve problems programmatically, clearly describe your approach and what you are doing.**
+
+#### Problem 1: Overbooking Flights
+
+You are hired by Air Nowhere to recommend the optimal overbooking rate. It is a small airline that uses a 100-seat plane to carry you from Seattle to, well, nowhere. The tickets cost $100 each. The sales team has found that the probability, that the passengers who have paid their fare actually show up is 98%, and individuals showing up can be considered independent. The additional costs, associated with finding an alternative solutions for passengers who are refused boarding are \$500 per person.
+
+##### (a) Which distribution would you use to characterize the actual number of people who show up for flights?
+```{r}
+#Binomial Distribution. As people tend to choose either show up or not.
+```
+
+##### (b) Assume the airline never overbooks. What is the expected revenue from a full flight in this scenario? Expected revenue is the expected income from ticket sales minus expected costs related to alternative solutions.
+```{r}
+100*100
+#$100 per seat, 100 seats booked.
+```
+
+##### (c) Now assume the airline sells 101 tickets for 100 seats on a given flight. What is the probability that all 101 passengers will show up?
+```{r}
+0.98**101
+```
+
+##### (d) What are the expected profits (where profits are revenue - expected additional costs) when the airlines sells 101 tickets for 100 seats? Would you recommend overbooking or selling just the right number of tickets per flight?
+```{r}
+100*101 - 500*(0.98**101)
+# I would recommend overbooking. As the profits would be higher.
+```
+
+##### (e) Now assume the airline sells 102 tickets for 100 seats on a given flight. What is the probability that all 102 passengers show up?
+```{r}
+0.98**102
+```
+
+##### (f) What is the probability that 101 passengers - still one too many - will show up when 102 tickets are sold for a given flight?
+```{r}
+(0.98**101)*0.02*102
+```
+
+##### (g) Would it be advisable to sell 102 tickets, 101 tickets, or 100 tickets for a given flight if the airline wanted to maximize revenue? (i.e. which has the highest expected revenue: selling 100, 101, or 102 tickets? 
+```{r}
+#expect revenue for 102 tickets:
+100*102- 500*((0.98**101)*0.02*102) - 1000*(0.98**102)
+
+# Selling 101 tickets has the highest expected revenue.
+```
+
+##### (h) What is the optimal number of seats to sell for the airline? How much are expected profits the expected profits in this case?
+```{r}
+# The optimal number of seats to sell is 101.
+# The expected profits is $10035.02.
+```
+
+##### (g) What does it mean to state that individuals showing up for a flight are independent? Why is this important in this case?
+```{r}
+# It means that each individual's decision are not related to each other.
+# If it's not independent, the probablity of people not showing up would change depends on the number of people not showing up. In this case, we cannot use 0.98**101*0.02*102 to calculate the probablity of 101 people showing up when 102 seats are booked as the probablity will change once there is one people not showing up.
+```
+#### Problem 2: Asking Data Science Questions: Crime and Educational Attainment
+
+For a given exam, there is a multiple-choice question with four (mutually exclusive) options. On average, 80% of the students know the answer. Among those who know the answer, 10% answer incorrectly due to exam stress.
+
+##### (a) If a student gets the answer correct, what is the probability that they actually know the material?
+
+Be sure to describe and outline each step in your calculations.
+```{r}
+# For those who know the answer(80%), they are 90% likely to get it correct.
+# For those who don't know the answer(20%), they are 25% likely to get it correct(4 options)
+#Pr(correct)=0.8*0.9 + 0.2* 0.25 = 0.77
+#Pr(know|correct) = Pr(correct|know)*Pr(know)/Pr(correct)
+0.9*0.8/0.77
+#Answer:93.5%
+```
+#### Problem 3: Histograms and distributions
+
+In this problem, you will be examining human height and citation counts for research papers (separately).
+
+##### (a) What kind of measure is human height (nominal, ordinal, interval, ratio)? How should it it be measured (continuous, discrete; positive, negative, either)?
+```{r}
+#Interval
+#Continuous
+```
+##### (b) Read in the "fatherson.csv" data. The data consists of two columns: father's height and son's height (both in cm). Let's focus on fathers' heights (\textit{fheight}). How many observations are there? Are there any missing values?
+```{r}
+library(dplyr)
+fatherson <- read.csv("fatherson.csv", sep = "\t")
+count_father = count(fatherson)  # there are 1078 observations.
+filter(fatherson,is.na(fheight))
+#There isn't any missing values
+```
+##### (c) Compute the mean, median, standard deviation, and range of the heights. Discuss the relationship between these numbers. Is the mean larger than the median? What does this suggest? Would calculating the mode give a useful descriptive statistic? Why or why not? How does standard deviation compare to mean?
+```{r}
+father <- select(fatherson,fheight)
+father_vec <- as.vector(unlist(father))
+mean_father <- mean(father_vec) #mean ~ 171.93
+median_father <- median(father_vec) # median = 172.1
+std_father <- sd(father_vec) #sd ~ 6.97
+std_mean <- std_father/mean_father #standard deviation compare to mean is 0.04
+
+# median is larger than mean.
+# Calculation mode will not give a useful description as mode 
+mode_father <- group_by(father,fheight)
+mode_father <- summarise(mode_father, count = n())
+arrange(mode_father, desc(count))
+#Comparing to the total observation number, the mode only has 13 observations.
+```
+##### (d) Plot a histogram of the data. On the same plot, overlay a plot of the normal distribution with the same mean and standard deviation as the data. Additionally, indicate the mean and median of the data using vertical lines of different colors. What do you find? Are the histogram and the density plot similar?
+```{r}
+library(ggplot2)
+ggplot(data=fatherson, aes(x=fheight)) +
+  geom_histogram((aes(y=..density..)),bins=15) +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(fatherson$fheight), sd = sd(fatherson$fheight)), 
+    col = 'red'
+ ) +
+  geom_vline(xintercept = mean_father,col= 'green') +
+  geom_vline(xintercept = median_father,col= 'orange')
+# The histogram and the density plot are similar
+```
+##### (e) What kind of measure is the citation counts for research papers (i.e. the number of times that a paper is referenced by other papers)? How should it be measured?
+```{r}
+# Ratio
+# Continuous
+```
+##### (f) Read in the "mag-in-citations.csv" data. This is Microsoft Academic's Graph for citations of research papers and it contains two columns: paper id and the number of citations. We will only look at the number of citations. How many observations are there? Are there any missing values?
+```{r}
+citation <- read.csv("mag-in-citations.csv")
+count_citation = count(citation)
+print(count_citation[[1]]) # There are 388258 observation
+filter(citation,is.na(count)) # There is no missing value
+```
+##### (g) Compute the mean, median, standard deviation, and range of the citations. Discuss the relationship between these numbers. Is the mean larger than the median? What does this suggest? Would calculating the mode give a useful descriptive statistic? Why or why not? How does standard deviation compare to mean?
+```{r}
+mean_citation <- mean(citation$citations) #mean ~ 15.6
+median_citation <- median(citation$citations) # median = 3
+std_citation <- sd(citation$citations) #sd ~ 78.4
+std_mean_citation <- std_citation/mean_citation
+# standard deviation compare to mean is 5.02
+# mean is larger than median.
+# right-tail distribution
+# the mode can give a useful decriptive as the data is right-tail distributed.
+```
+##### (h) Calculate the 90th percentile for the citation data. How does this compare to the maximum value of the citation data? Calcualte the 10th percentile for the citation data. How does this compare to the minimum value of the citation data? What does this all suggest with respect to the shape of the distribution of citation counts?
+```{r}
+Max_citation <- max(citation$citations) #maximum value of the citation data is 18682
+min_citation <- min(citation$citations) #0
+quantile(citation$citations, c(0.1,0.9))
+# 90th percentile is 34, which is much smaller than the maximum number.
+# 10th percentile is 0, which is exactly the same as the minima number
+# The shape of the distribution is right-tailed, there are some extrame values.
+```
+##### (i) Plot a histogram of the data. On the same plot, overlay a plot of the normal distribution with the same mean and standard deviation as the data. Additionally, indicate the mean and median of the data using vertical lines of different colors. What do you find? Are the histogram and the density plot similar? Now try this with what is called a "log-log" transformation (i.e. plotting the x and y axes on a logarithmic scale)
+```{r}
+
+ggplot(citation, aes(x=citations)) +
+  geom_histogram(aes(y = ..density..)) +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean_citation, sd = std_citation), 
+    color = "red"
+ )+ 
+  scale_x_continuous(trans = 'log2')+
+  geom_vline(xintercept = mean_citation,col= 'green') +
+  geom_vline(xintercept = median_citation,col= 'orange')
+```
+##### (j) Seeing how well (or not well) that the heights and the citations datasets align with the normal distribution, what are your thoughts on these datasets and do the findings make sense with respect to what we'd expect to see concerning heights and influence (as measured by citations)?
+```{r}
+# The density of the normal distribution is too low comparing to the histogram of citation datasets.
+# There might be too many extrame data, or the distribution itself may not be the normal distribution.
+# Heights dataset is expected to be normal distribution but citation dataset is not. As the value of mean - median is quite large.
+```

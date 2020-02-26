@@ -1,0 +1,135 @@
+---
+title: 'IMT 573: Problem Set 1 - Exploring Data'
+author: "Wenyue Yin"
+date: 'Due: Tuesday, October 08, 2019'
+output: pdf_document
+---
+
+<!-- This syntax can be used to add comments that are ignored during knitting process. -->
+
+##### Collaborators: <!-- BE SURE TO LIST ALL COLLABORATORS HERE! -->
+
+##### Instructions:
+
+Before beginning this assignment, please ensure you have access to R and RStudio; this can be on your own personal computer or on the IMT 573 R Studio Server. 
+
+1. Download the `problemset1.Rmd` file from Canvas or save a copy to your local directory on RStudio Server. Open `problemset1.Rmd` in RStudio and supply your solutions to the assignment by editing `problemset1.Rmd`. 
+
+2. Replace the "Insert Your Name Here" text in the `author:` field with your own full name. Any collaborators must be listed on the top of your assignment. 
+
+3. Be sure to include well-documented (e.g. commented) code chucks, figures, and clearly written text chunk explanations as necessary. Any figures should be clearly labeled and appropriately referenced within the text. Be sure that each visualization adds value to your written explanation; avoid redundancy -- you do no need four different visualizations of the same pattern.
+
+4.  Collaboration on problem sets is fun and useful, and we encourage it, but each student must turn in an individual write-up in their own words as well as code/work that is their own.  Regardless of whether you work with others, what you turn in must be your own work; this includes code and interpretation of results. The names of all collaborators must be listed on each assignment. Do not copy-and-paste from other students' responses or code.
+
+5. All materials and resources that you use (with the exception of lecture slides) must be appropriately referenced within your assignment.  
+
+6. Remember partial credit will be awarded for each question for which a serious attempt at finding an answer has been shown. Students are \emph{strongly} encouraged to attempt each question and to document their reasoning process even if they cannot find the correct answer. If you would like to include R code to show this process, but it does not run withouth errors you can do so with the `eval=FALSE` option as follows:
+
+```{r example chunk with a bug, eval=FALSE}
+a + b # these object dont' exist 
+# if you run this on its own it with give an error
+```
+
+7. When you have completed the assignment and have **checked** that your code both runs in the Console and knits correctly when you click `Knit PDF`, rename the knitted PDF file to `Yps1_ourLastName_YourFirstName.pdf`, and submit the PDF file on Canvas.
+
+##### Setup: 
+
+In this problem set you will need, at minimum, the following R packages.
+
+```{r Setup, message=FALSE}
+# Load standard libraries
+library(tidyverse)
+library(nycflights13)
+```
+
+#### Problem 1: Exploring the NYC Flights Data
+
+In this problem set we will use the data on all flights that departed NYC (i.e. JFK, LGA or EWR) in 2013. You can find this data in the `nycflights13` R package. 
+
+```{r}
+# Load the nycflights13 library which includes data on all
+# lights departing NYC
+data(flights)
+# Note the data itself is called flights, we will make it into a local df
+# for readability
+flights <- tbl_df(flights)
+# Look at the help file for information about the data
+# ?flights
+summary(flights)
+# summary(flights)
+```
+
+##### (a) Importing and Inspecting Data
+
+Load the data and describe in a short paragraph how the data was collected and what each variable represents. Perform a basic inspection of the data and discuss what you find.
+
+#The flights data shows the basic information of the flights including the carriers, tailnumber, and the actual and scheduled department time and arrival time.
+#Year, month, day, sched_dep_time show the scheduled departure ime, dep_time shows the actual departure time, dep_delay equals dep_time-sched_dep_time. Situations are same for the arrival time. Carrier, flight, tailnum, origin, destination, airtime, distance are basic information about the plane and the flight. Hour, minute, time_hour are related to the scheduled depart time.
+
+
+
+##### (b) Formulating Questions
+
+Consider the NYC flights data. Formulate two motivating questions you want to explore using this data. Describe why these questions are interesting and how you might go about answering them.
+
+#Q1. How many flights that delayed in departure but arrived ealier than scheduled?
+# From my own experience, if there's delay in departure, the pilots would speed up to catch the time, so it would be easier to arrive ealier. Would like to find out if that's true for all flights.
+# May create a matrix to show the number of flights delay and on time on arrival.
+
+#Q2.Is the flights' delay rate related to the distance?
+# This is a question I'm always curious about. As from my own experience, international flights are more likely to be on time than national flights. Perhaps of the reason of distance.
+# I may first calculate the mean delay time and mean distance, then use the geom_point to show the graphic.
+
+##### (c) Exploring Data
+
+For each of the questions you proposed in Problem 1b, perform an exploratory data analysis designed to address the question. At a minimum, you should produce two visualizations (graphics or tables) related to each question. Be sure to describe what the visuals show and how they speak to your question of interest. 
+
+#Q1 How many flights that delayed in departure but arrived ealier than scheduled?
+
+
+```{r}
+flights_delay<- select(flights,
+                      dep_delay,
+                      arr_delay)
+flights_delay1<- transmute(flights_delay,
+       dep_log = dep_delay>0,
+       arr_log = arr_delay>0 )
+
+de_ar<- group_by(flights_delay1,dep_log,arr_log)
+delay<- summarize(de_ar,count = n())
+```
+
+
+##the result shows like
+# A tibble: 2 x 3
+# Groups:   dep_log [1]
+#  dep_log arr_log count
+#  <lgl>   <lgl>   <int>
+#1 TRUE    FALSE   35442
+#2 TRUE    TRUE    92303
+
+#Based on the table, it is still more likely for flights to arrive late when delayed in departure.
+
+#Q2 Is the flights' delay rate related to distance?
+
+```{r}
+by_dest <- group_by(flights, origin, dest)
+delay <- summarize(by_dest,
+                   count = n(),
+                   dist = mean(distance, na.rm = TRUE),
+                   delay = mean(arr_delay, na.rm = TRUE) )
+delay <- filter(delay, count > 20)
+ggplot(data = delay, mapping = aes(x = dist, y = delay)) +
+    geom_point(aes(size=count), alpha = 1/3) + 
+    geom_smooth(se = FALSE)
+```
+
+
+#Base on the graphic, the longer the distance is , the more likely for the flight to be delayed.
+
+##### (d) Challenge Your Results
+
+After completing the exploratory analyses from Problem 1c, do you have any concerns about your findings? How well defined was your original question? Do you still believe this question can be answered using this dataset? Comment on any ethical and/or privacy concerns you have with your analysis. 
+
+# For the second question, as most of the flights have the distance less than 3000, we lack the data of further distance to test the result.
+

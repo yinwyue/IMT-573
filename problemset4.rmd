@@ -1,0 +1,168 @@
+---
+title: 'IMT 573: Problem Set 4 - Data Analysis'
+author: "Wenyue Yin"
+date: 'Due: Tuesday, October 29, 2019'
+output: pdf_document
+---
+
+<!-- This syntax can be used to add comments that are ignored during knitting process. -->
+
+##### Collaborators: Lihua Deng
+
+##### Instructions:
+
+Before beginning this assignment, please ensure you have access to R and RStudio; this can be on your own personal computer or on the IMT 573 R Studio Server. 
+
+1. Download the `problemset4.rmd` file from Canvas or save a copy to your local directory on RStudio Server. Open `problemset4.rmd` in RStudio and supply your solutions to the assignment by editing `problemset4.rmd`. 
+
+2. Replace the "Insert Your Name Here" text in the `author:` field with your own full name. Any collaborators must be listed on the top of your assignment. 
+
+3. Be sure to include well-documented (e.g. commented) code chucks, figures, and clearly written text chunk explanations as necessary. Any figures should be clearly labeled and appropriately referenced within the text. Be sure that each visualization adds value to your written explanation; avoid redundancy -- you do no need four different visualizations of the same pattern.
+
+4.  Collaboration on problem sets is fun and useful, and we encourage it, but each student must turn in an individual write-up in their own words as well as code/work that is their own.  Regardless of whether you work with others, what you turn in must be your own work; this includes code and interpretation of results. The names of all collaborators must be listed on each assignment. Do not copy-and-paste from other students' responses or code.
+
+5. All materials and resources that you use (with the exception of lecture slides) must be appropriately referenced within your assignment.  
+
+6. Remember partial credit will be awarded for each question for which a serious attempt at finding an answer has been shown. Students are \emph{strongly} encouraged to attempt each question and to document their reasoning process even if they cannot find the correct answer. If you would like to include R code to show this process, but it does not run withouth errors you can do so with the `eval=FALSE` option.
+
+```{r example chunk with a bug, eval=FALSE, include=FALSE}
+a + b # these object dont' exist 
+# if you run this on its own it with give an error
+```
+
+7. When you have completed the assignment and have **checked** that your code both runs in the Console and knits correctly when you click `Knit PDF`, rename the knitted PDF file to `ps4_ourLastName_YourFirstName.pdf`, and submit the PDF file on Canvas.
+
+##### Setup
+
+In this problem set you will need, at minimum, the following R packages.
+
+```{r}
+# Load standard libraries
+library(tidyverse)
+library(gridExtra)
+```
+
+#### Problem 1: 50 States in the USA
+
+In this problem we will use the `state` dataset, available as part of the R statistical computing platforms. This data is related to the 50 states of the United States of America. Load the data and use it to answer the following questions. 
+
+##### (a) Describe the data and each variable it contains. Tidy the data, preparing it for a data analysis.
+
+```{r}
+data(state) 
+
+#state.abb contains the abbreviations of each state.
+#state.area contains the area of each state.
+#state.center contains the longitude and latitude of the center of each state.
+#state. division divide the states into 9 different levels:New England, Middle Atlantic, South Atlantic, Pacific,Mountain, East North Central, West South Central, East South Central, and West North Central.
+#state.name contains the full names of each state.
+#state.region divide the states into 4 different region levels: Northeast, South, North Central, and West.
+#state.x77 contains the basic information of population, cirme, income,etc.
+
+
+
+```
+
+##### (b) Suppose you want to explore the relationship between a state's `Murder` rate and other characteristics of the state, for example population, illiteracy rate, and more. Begin by examining the bivariate relationships present in the data. Present and interpret numeric value to describe the linear relationships as well as plots to contextualize these numeric values. What does your analysis suggest might be important varibles to consider in building a model to explain variation in murder rates? Are linear relationships appropriate to assume for all bivariate relationships? Why or why not?
+
+
+```{r}
+state <- as.data.frame(state.x77)
+cor(state)
+
+# The relationship between Murder rate and Illiteracy rate is most appropriate to decribe as linear relationship. Not all bivariate relationships are linear.
+
+```
+
+
+##### (c) Develop a new research question of your own that you can address using the `state` dataset. Clearly state the question you are going to address. Provide at least one visualization to support your exploration of this question. Discuss what you find in your exploration.
+
+```{r}
+#Question: How's Murder rate related to Life Expectation? As the correlationship between them from the table above is minus.
+plot(state$Murder,state$`Life Exp`, xlab = "Murder rate", ylab = "Life Expectation")
+abline(lm(state$Murder~state$`Life Exp`))
+
+#The line is actually above the plot.
+```
+
+#### Problem 2: Asking Data Science Questions: Crime and Educational Attainment
+
+In Problem Set 3, you joined data about crimes and educational attainment. Here you will use this new combined dataset to examine questions around crimes in Seattle and the educational attainment of people
+living in the areas in which the crime occurred. The combined state dataset is available on the course Canvas website (note: this will be available after all students submit Problem Set 3).
+
+#### (a) Develop a Data Science Question
+
+Develop your own question to address in this analysis. Your question should be specific and measurable, and it should be able to be addressed through a basic analysis of the dataset from Problem Set 3. This analysis must involve at least one hypothesis test. Clearly state what the question is and the suitable null and alternative hypotheses.
+
+Question:
+In the beats that have the crime count less than 6000 , Is the average education count more than 4000 ?
+
+Null hypothesis: In the beats that have the crime count less than 8000 , the average education count is more than 4000.
+Alternative hypothesis: In the beats that have the crime count less than 8000 , the average education count is equal to or less than 4000.
+
+
+#### (b) Describe and Summarize
+
+Briefly summarize the dataset, describing what data exists and its basic properties. Comment on any issues that need to be resolved before you can proceed with your analysis. Provide descriptive statistics of variables of interest.
+
+
+```{r}
+ccd <- read.csv("combinedCrimeDataset.csv")
+# We have the crime data, and the education data, and the beat information.
+# need to count the number of total education number in each beats, and the count of crime in each beat.
+```
+
+#### (c) Data Analysis
+
+Use the dataset to provide empirical evidence to answer your question from part (a). Discuss your results. Provide at least one visualization to support your narrative. (NOTE: you will not be graded on whether you see statistically significant results but rather on your interpretation of findings)
+
+
+```{r}
+crime_edu <- group_by(ccd, Beat, total)
+crime_edu <- summarise(crime_edu, count= n())
+crime_cleaned <- filter(crime_edu, count< 6000)
+total <- crime_cleaned[2]
+total <- as.vector(unlist(total))
+
+t.test(total, mu = 4000,alternative = 'l')
+
+
+
+```
+
+
+```{r}
+plot(crime_cleaned$total, crime_cleaned$count)
+abline(h = 4000)
+
+```
+#### (d) Reflect and Question
+
+Comment on the questions (and answers) in this analysis. Were you able to adequately answer your question? Is there additional data that would help provide a more clear picture of the problem you are analyzing?
+
+Yes. 
+I don't need extra data.
+
+
+#### Problem 3: Sampling with and without Replacement
+
+In the following situations assume that half of the specified population wears glasses and the other half does not.
+
+##### (a) Suppose you're sampling from a room with 10 people. What is the probability of sampling two people wearing glasses in a row when sampling with replacement? What is the probability when sampling without replacement?
+
+```{r}
+#P(replacement) = 0.5 * 0.5 = 0.25
+#P(without replacement) = 0.5 * 4/9 = 2/9 = 0.22
+```
+
+##### (b)  Now suppose you're sampling from a stadium with 10,000 people. What is the probability of sampling two people wearing glasses in a row when sampling with replacement? What is the probability when sampling without replacement?
+
+```{r}
+#P(replacement) = 0.5 * 0.5 = 0.25
+#P(without replacement) = 0.5 * 4999/9999 = 4999/19998 = 0.249975
+```
+
+##### (c) We often treat individuals who are sampled from a large population as independent. Using your findings from parts (a) and (b), explain whether or not this assumption is reasonable.
+
+The assumption is reasonable. The larger the dataset is, the closer the number i/n and (i-1)/(n-1) are.
+
